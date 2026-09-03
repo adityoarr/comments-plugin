@@ -2,6 +2,7 @@
 const nextConfig = {
   // 1. Base path for subpath deployment
   basePath: '/comments-plugin',
+  assetPrefix: '/comments-plugin',
 
   // 2. Image optimization (add your CDN or Firebase Storage domain if needed)
   images: {
