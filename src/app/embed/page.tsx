@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { getIdToken } from '@/lib/auth';
+import { signInAnonymously } from 'firebase/auth';
+import { auth } from '@/lib/firebase/client';
 import type { WidgetMessage } from '@/types/widget';
-import { getAppCheckToken } from '@/lib/app-check';
 
 interface Comment {
   id: string;
@@ -15,13 +15,13 @@ interface Comment {
   authorId: string;
 }
 
-export default function EmbedWidget() {
+// Komponen utama yang menggunakan useSearchParams
+function EmbedWidgetContent() {
   const searchParams = useSearchParams();
   const threadId = searchParams.get('threadId');
   const host = searchParams.get('host');
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // State
   const [comments, setComments] = useState<Comment[]>([]);
   const [nextCursor, setNextCursor] = useState<{ cursorTime: number; cursorId: string } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,58 +31,63 @@ export default function EmbedWidget() {
   const [newComment, setNewComment] = useState('');
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  // 1. Fetch Comments
+  // Helper untuk mendapatkan token
+  const getToken = async () => {
+    let currentUser = auth.currentUser;
+    if (!currentUser) {
+      const userCredential = await signInAnonymously(auth);
+      currentUser = userCredential.user;
+    }
+    return await currentUser.getIdToken(true);
+  };
+
+  // Fetch Comments
   const fetchComments = async (isLoadMore = false) => {
-  if (!threadId) return;
-  
-  try {
-    if (isLoadMore) setLoadingMore(true);
-    else setLoading(true);
-    setError(null);
+    if (!threadId) return;
+    
+    try {
+      if (isLoadMore) setLoadingMore(true);
+      else setLoading(true);
+      setError(null);
 
-    const params = new URLSearchParams({ threadId, limit: '10' });
-    
-    console.log('🔄 Fetching comments from:', `/api/comments?${params.toString()}`);
-    
-    const response = await fetch(`/comments-plugin/api/comments?${params.toString()}`);
-    
-    // Check if response is JSON
-    const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      const text = await response.text();
-      console.error('❌ Non-JSON response:', text.substring(0, 200));
-      throw new Error('Server returned non-JSON response');
+      const params = new URLSearchParams({ threadId, limit: '10' });
+      
+      const response = await fetch(`/comments-plugin/api/comments?${params.toString()}`);
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Non-JSON response:', text.substring(0, 200));
+        throw new Error('Server returned non-JSON response');
+      }
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (isLoadMore) {
+        setComments(prev => [...prev, ...data.comments]);
+      } else {
+        setComments(data.comments);
+      }
+      setNextCursor(data.nextCursor);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load comments. Please try again later.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
     }
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || `HTTP ${response.status}`);
-    }
-    
-    const data = await response.json();
-    console.log('✅ Received comments:', data.comments.length);
-    
-    if (isLoadMore) {
-      setComments(prev => [...prev, ...data.comments]);
-    } else {
-      setComments(data.comments);
-    }
-    setNextCursor(data.nextCursor);
-  } catch (err) {
-    console.error('❌ Fetch error:', err);
-    setError('Failed to load comments. Please try again later.');
-  } finally {
-    setLoading(false);
-    setLoadingMore(false);
-  }
-};
+  };
 
-  // Initial load
   useEffect(() => {
     fetchComments();
   }, [threadId]);
 
-  // 2. ResizeObserver for dynamic height adjustment
+  // ResizeObserver
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -96,71 +101,61 @@ export default function EmbedWidget() {
 
     resizeObserver.observe(containerRef.current);
     return () => resizeObserver.disconnect();
-  }, [comments, loading, error]); // Re-evaluate when state changes
+  }, [comments, loading, error]);
 
-  // 3. Post Comment Handler
+  // Post Comment
   const handlePostComment = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!newComment.trim() || !threadId) return;
+    e.preventDefault();
+    if (!newComment.trim() || !threadId) return;
 
-  try {
-    setIsPosting(true);
-    setError(null);
+    try {
+      setIsPosting(true);
+      setError(null);
 
-    console.log('🔄 Posting comment...');
-    
-    // Get token
-    const token = await getIdToken();
-    console.log('✅ Got Firebase token');
+      const token = await getToken();
+      
+      const payloadBase64 = token.split('.')[1];
+      const decoded = JSON.parse(atob(payloadBase64));
+      setCurrentUserId(decoded.uid);
 
-    const appCheckToken = await getAppCheckToken();
-    
-    const response = await fetch('/comments-plugin/api/comments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json',
-      'X-App-Check-Token': appCheckToken || '' },
-      body: JSON.stringify({
-        threadId,
-        content: newComment,
-        firebaseIdToken: token,
-      }),
-    });
+      const response = await fetch('/comments-plugin/api/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          threadId,
+          content: newComment,
+          firebaseIdToken: token,
+        }),
+      });
 
-    console.log(' Response status:', response.status);
-    console.log('📊 Response headers:', response.headers.get('content-type'));
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Non-JSON response:', text.substring(0, 200));
+        throw new Error('Server error - check console');
+      }
 
-    // Check content type
-    const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      const text = await response.text();
-      console.error('❌ Non-JSON response:', text.substring(0, 200));
-      throw new Error('Server error - check console');
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || 'Failed to post comment');
+      }
+
+      const createdComment = await response.json();
+      setComments(prev => [createdComment, ...prev]);
+      setNewComment('');
+    } catch (err: any) {
+      setError(err.message || 'Failed to post comment');
+    } finally {
+      setIsPosting(false);
     }
+  };
 
-    if (!response.ok) {
-      const errData = await response.json();
-      throw new Error(errData.error || 'Failed to post comment');
-    }
-
-    const createdComment = await response.json();
-    console.log('✅ Comment posted:', createdComment.id);
-    
-    setComments(prev => [createdComment, ...prev]);
-    setNewComment('');
-  } catch (err: any) {
-    console.error('❌ Post error:', err);
-    setError(err.message || 'Failed to post comment');
-  } finally {
-    setIsPosting(false);
-  }
-};
-
-  // 4. Delete Comment Handler
+  // Delete Comment
   const handleDeleteComment = async (commentId: string) => {
     if (!confirm('Are you sure you want to delete this comment?')) return;
 
     try {
-      const token = await getIdToken();
+      const token = await getToken();
       const response = await fetch(`/comments-plugin/api/comments/${commentId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
@@ -184,7 +179,7 @@ export default function EmbedWidget() {
         <h2 className="text-xl font-bold text-gray-800">
           Comments <span className="text-gray-500 text-base font-normal">({comments.length})</span>
         </h2>
-        <p className="text-xs text-gray-500 mt-1">Thread: {threadId}</p>
+        <p className="text-xs text-gray-500 mt-1">Thread: {threadId} | Host: {host}</p>
       </div>
 
       {error && (
@@ -193,7 +188,6 @@ export default function EmbedWidget() {
         </div>
       )}
 
-      {/* Post Comment Form */}
       <form onSubmit={handlePostComment} className="mb-8 flex gap-3">
         <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 text-blue-600 font-bold">
           Y
@@ -219,7 +213,6 @@ export default function EmbedWidget() {
         </div>
       </form>
 
-      {/* Comments List */}
       <div className="space-y-6">
         {loading && comments.length === 0 ? (
           <div className="text-center py-8 text-gray-500">Loading comments...</div>
@@ -245,7 +238,6 @@ export default function EmbedWidget() {
                     </div>
                     <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{comment.content}</p>
                     
-                    {/* Delete Button (Only for owner) */}
                     {isOwner && (
                       <button
                         onClick={() => handleDeleteComment(comment.id)}
@@ -256,6 +248,11 @@ export default function EmbedWidget() {
                       </button>
                     )}
                   </div>
+                  
+                  <div className="mt-2 flex gap-4">
+                    <button className="text-xs font-medium text-gray-500 hover:text-blue-600 transition-colors">Reply</button>
+                    <button className="text-xs font-medium text-gray-500 hover:text-blue-600 transition-colors">Like</button>
+                  </div>
                 </div>
               </div>
             );
@@ -263,7 +260,6 @@ export default function EmbedWidget() {
         )}
       </div>
 
-      {/* Load More */}
       {nextCursor && (
         <div className="mt-8 text-center">
           <button
@@ -276,5 +272,26 @@ export default function EmbedWidget() {
         </div>
       )}
     </div>
+  );
+}
+
+// Loading fallback component
+function EmbedWidgetLoading() {
+  return (
+    <div className="min-h-[200px] bg-white p-4 font-sans">
+      <div className="animate-pulse space-y-4">
+        <div className="h-6 bg-gray-200 rounded w-1/4"></div>
+        <div className="h-32 bg-gray-200 rounded"></div>
+      </div>
+    </div>
+  );
+}
+
+// Main page component dengan Suspense wrapper
+export default function EmbedWidget() {
+  return (
+    <Suspense fallback={<EmbedWidgetLoading />}>
+      <EmbedWidgetContent />
+    </Suspense>
   );
 }
