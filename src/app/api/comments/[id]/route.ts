@@ -1,39 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase/admin';
-import { z } from 'zod';
-
-const deleteCommentSchema = z.object({
-  firebaseIdToken: z.string().min(10),
-});
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> } // ← PERBAIKAN: params adalah Promise
 ) {
   try {
-    const commentId = params.id;
-    const body = await request.json();
-    const validation = deleteCommentSchema.safeParse(body);
+    // PERBAIKAN: await params untuk mendapatkan id
+    const { id: commentId } = await params;
 
-    if (!validation.success) {
-      // FIX: Use validation.error.issues instead of validation.error.errors
-      return NextResponse.json(
-        { error: 'Invalid request data', details: validation.error.issues }, 
-        { status: 400 }
-      );
+    if (!commentId) {
+      return NextResponse.json({ error: 'Comment ID is required' }, { status: 400 });
     }
 
-    const { firebaseIdToken } = validation.data;
+    // Get auth token from header
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Authorization required' }, { status: 401 });
+    }
 
-    // 1. Verify Authentication
+    const token = authHeader.substring(7);
+
+    // Verify token
     let decodedToken;
     try {
-      decodedToken = await adminAuth.verifyIdToken(firebaseIdToken);
+      decodedToken = await adminAuth.verifyIdToken(token);
     } catch (err) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Invalid authentication token' }, { status: 401 });
     }
 
-    // 2. Fetch Comment to Verify Ownership
+    // Get comment
     const commentRef = adminDb.collection('comments').doc(commentId);
     const commentDoc = await commentRef.get();
 
@@ -43,20 +39,19 @@ export async function DELETE(
 
     const commentData = commentDoc.data();
 
-    // SECURITY RATIONALE: Strict ownership check.
-    // A user can only delete a comment if their verified UID matches the authorId stored in the database.
-    // (In a full SaaS, you would also add: `|| isAdmin(decodedToken.uid)`)
+    // Check ownership
     if (commentData?.authorId !== decodedToken.uid) {
-      return NextResponse.json({ error: 'Forbidden: You can only delete your own comments' }, { status: 403 });
+      return NextResponse.json({ error: 'You can only delete your own comments' }, { status: 403 });
     }
 
-    // 3. Delete the comment
+    // Delete comment
     await commentRef.delete();
+    console.log('✅ Comment deleted:', commentId);
 
-    return NextResponse.json({ success: true, message: 'Comment deleted' });
+    return NextResponse.json({ success: true });
 
   } catch (error) {
-    console.error('DELETE /api/comments/[id] error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error('❌ DELETE error:', error);
+    return NextResponse.json({ error: 'Failed to delete comment' }, { status: 500 });
   }
 }
