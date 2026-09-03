@@ -1,0 +1,78 @@
+{
+  "Metadata": {
+    "home": {
+      "title": "Comments Plugin — Widget Komentar Gratis untuk Website Mana Pun",
+      "description": "Tambahkan kolom komentar yang benar-benar termoderasi ke blog, dokumentasi, atau aplikasi kamu hanya dengan dua baris kode. Tanpa database, tanpa sistem autentikasi, tanpa server sendiri — didukung Next.js dan Firebase.",
+      "ogAlt": "Pratinjau Comments Plugin — widget komentar yang dapat ditanam di halaman mana pun"
+    },
+    "docs": {
+      "title": "Panduan Instalasi & Integrasi",
+      "description": "Panduan lengkap memasang widget Comments Plugin: instalasi cepat, catatan per-framework, thread ID, Content Security Policy, moderasi, hingga troubleshooting.",
+      "ogAlt": "Pratinjau dokumentasi Comments Plugin"
+    }
+  },
+  "Nav": {
+    "brand": "Comments Plugin",
+    "docs": "Dokumentasi",
+    "signIn": "Masuk",
+    "dashboard": "Dasbor",
+    "language": "Bahasa"
+  },
+  "Footer": {
+    "builtBy": "Dibuat oleh",
+    "sourceCode": "Kode sumber",
+    "docs": "Dokumentasi"
+  },
+  "Home": {
+    "badge": "Comments Plugin",
+    "title": "Widget komentar yang bisa ditanam di website mana pun",
+    "subtitle": "Tambahkan kolom komentar yang benar-benar termoderasi ke blog, dokumentasi, atau aplikasi kamu hanya dengan dua baris kode. Tanpa database, tanpa sistem autentikasi, dan tanpa server yang perlu kamu jalankan sendiri — semuanya ditangani oleh layanan ini.",
+    "ctaDashboard": "Masuk ke dasbor kamu",
+    "ctaDocs": "Baca panduan integrasi",
+    "installHeading": "Pasang di website kamu",
+    "installNote": "Selesai — widget otomatis lazy-load dan menyesuaikan tingginya sendiri sesuai konten.",
+    "installLink": "Lihat panduan instalasi lengkap →",
+    "featuresHeading": "Kenapa tim memakai ini",
+    "features": [
+      {
+        "title": "Tinggal tempel",
+        "desc": "Satu tag <div> dan satu tag <script>. Berfungsi di halaman HTML apa pun — tidak perlu framework khusus di sisi kamu."
+      },
+      {
+        "title": "Aman & terisolasi",
+        "desc": "Berjalan di dalam iframe sandboxed dengan validasi origin pada setiap pesan, jadi tidak pernah menyentuh DOM halaman kamu secara langsung."
+      },
+      {
+        "title": "Didukung Firebase",
+        "desc": "Autentikasi anonim untuk komentator, sign-in Google untuk pemilik situs, Firestore untuk penyimpanan — tidak perlu backend sendiri."
+      },
+      {
+        "title": "Moderasi bawaan",
+        "desc": "Setujui, tandai spam, atau hapus komentar per situs dari dasbor yang sederhana."
+      },
+      {
+        "title": "Dwibahasa secara default",
+        "desc": "Situs dasbor dan dokumentasi tersedia dalam bahasa Inggris dan Indonesia, sehingga kamu dan pengunjung dapat membacanya dengan nyaman."
+      },
+      {
+        "title": "Cepat & ramah SEO",
+        "desc": "Lazy-loaded, di-cache, dan dibangun di atas Next.js lengkap dengan metadata, sitemap, dan structured data siap pakai."
+      }
+    ],
+    "faqHeading": "Pertanyaan yang sering diajukan",
+    "faq": [
+      {
+        "q": "Apakah saya perlu menginstal package npm apa pun?",
+        "a": "Tidak. Widget ini berjalan sebagai layanan yang sudah di-hosting — kamu hanya menempelkan snippet HTML/JS di atas ke halaman kamu."
+      },
+      {
+        "q": "Apakah pengunjung perlu akun untuk berkomentar?",
+        "a": "Tidak. Secara default pengunjung berkomentar secara anonim; mereka tidak pernah diminta membuat akun."
+      },
+      {
+        "q": "Bisakah dipakai di beberapa domain sekaligus?",
+        "a": "Bisa. Daftarkan setiap domain lewat dasbor agar tiap situs punya pengaturan dan antrean moderasi sendiri."
+      }
+    ]
+  }
+}

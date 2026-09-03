@@ -1,0 +1,78 @@
+{
+  "Metadata": {
+    "home": {
+      "title": "Comments Plugin — Free Embeddable Comments Widget for Any Website",
+      "description": "Add a real, moderated comment section to your blog, docs, or app with two lines of code. No database, no auth system, no server to run — powered by Next.js and Firebase.",
+      "ogAlt": "Comments Plugin — embeddable comments widget preview"
+    },
+    "docs": {
+      "title": "Installation & Integration Guide",
+      "description": "Step-by-step guide to installing the Comments Plugin widget: quick setup, framework notes, thread IDs, Content Security Policy, moderation, and troubleshooting.",
+      "ogAlt": "Comments Plugin documentation preview"
+    }
+  },
+  "Nav": {
+    "brand": "Comments Plugin",
+    "docs": "Docs",
+    "signIn": "Sign in",
+    "dashboard": "Dashboard",
+    "language": "Language"
+  },
+  "Footer": {
+    "builtBy": "Built by",
+    "sourceCode": "Source code",
+    "docs": "Docs"
+  },
+  "Home": {
+    "badge": "Comments Plugin",
+    "title": "An embeddable comments widget for any website",
+    "subtitle": "Add a real, moderated comment section to your blog, docs, or app with two lines of code. No database, no auth system, and no server to run on your end — this app handles all of it.",
+    "ctaDashboard": "Sign in to your dashboard",
+    "ctaDocs": "Read integration docs",
+    "installHeading": "Add it to your site",
+    "installNote": "That's it — the widget lazy-loads itself and auto-resizes to fit its content.",
+    "installLink": "See the full installation guide →",
+    "featuresHeading": "Why teams use it",
+    "features": [
+      {
+        "title": "Drop-in embed",
+        "desc": "One <div> and one <script> tag. Works on any HTML page — no framework required on your side."
+      },
+      {
+        "title": "Sandboxed & safe",
+        "desc": "Runs inside a sandboxed iframe with origin-checked messaging, so it never touches your page's DOM directly."
+      },
+      {
+        "title": "Firebase-powered",
+        "desc": "Anonymous auth for commenters, Google sign-in for site owners, Firestore for storage — no backend to run yourself."
+      },
+      {
+        "title": "Built-in moderation",
+        "desc": "Approve, mark as spam, or delete comments per site from a simple dashboard."
+      },
+      {
+        "title": "Bilingual by default",
+        "desc": "The dashboard site and docs ship in English and Indonesian, so you and your visitors can read them comfortably."
+      },
+      {
+        "title": "Fast & SEO-friendly",
+        "desc": "Lazy-loaded, cached, and built on Next.js with proper metadata, sitemaps, and structured data out of the box."
+      }
+    ],
+    "faqHeading": "Frequently asked questions",
+    "faq": [
+      {
+        "q": "Do I need to install any npm package?",
+        "a": "No. The widget runs as an already-hosted service — you just paste the HTML/JS snippet above into your page."
+      },
+      {
+        "q": "Do visitors need an account to comment?",
+        "a": "No. Visitors comment anonymously by default; they are never asked to create an account."
+      },
+      {
+        "q": "Can I use it on multiple domains?",
+        "a": "Yes. Register each domain from the dashboard so every site gets its own settings and moderation queue."
+      }
+    ]
+  }
+}

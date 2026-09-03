@@ -1,5 +1,9 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import type { NextConfig } from 'next';
+import createNextIntlPlugin from 'next-intl/plugin';
+
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
+
+const nextConfig: NextConfig = {
   // 1. Base path for subpath deployment
   basePath: '/comments-plugin',
   assetPrefix: '/comments-plugin',
@@ -23,8 +27,8 @@ const nextConfig = {
   },
 
   // 3. CORS Headers Configuration
-  // Note: next.config.js headers apply to all methods. For method-specific CORS 
-  // (GET = any origin, POST = strict), we rely on Middleware (provided in Phase 4), 
+  // Note: next.config.js headers apply to all methods. For method-specific CORS
+  // (GET = any origin, POST = strict), we rely on Middleware (provided in Phase 4),
   // but we set safe defaults here.
   async headers() {
     return [
@@ -49,4 +53,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+export default withNextIntl(nextConfig);
