@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isSiteOwner(siteId) {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/sites/$(siteId)) &&
+             get(/databases/$(database)/documents/sites/$(siteId)).data.ownerId == request.auth.uid;
+    }
+    
+    function isValidContent(content) {
+      return content is string && content.size() >= 1 && content.size() <= 2000;
+    }
+    
+    // Sites collection - multi-tenant isolation
+    match /sites/{siteId} {
+      allow read: if isAuthenticated() && 
+                     (resource.data.ownerId == request.auth.uid || 
+                      resource.data.allowedDomains.has(request.resource.data.domain));
+      
+      allow create: if isAuthenticated() &&
+                       request.resource.data.ownerId == request.auth.uid &&
+                       request.resource.data.domain is string &&
+                       request.resource.data.domain.size() > 0 &&
+                       request.resource.data.createdAt == request.time;
+      
+      allow update, delete: if isSiteOwner(siteId);
+    }
+    
+    // Threads collection
+    match /threads/{threadId} {
+      allow read: if true;
+      
+      allow create: if isAuthenticated() &&
+                       request.resource.data.ownerId == request.auth.uid &&
+                       request.resource.data.siteId is string &&
+                       isSiteOwner(request.resource.data.siteId);
+      
+      allow update, delete: if isAuthenticated() &&
+                               resource.data.ownerId == request.auth.uid;
+    }
+    
+    // Comments collection
+    match /comments/{commentId} {
+      allow read: if true;
+      
+      allow create: if isAuthenticated() &&
+                       isValidContent(request.resource.data.content) &&
+                       request.resource.data.authorId == request.auth.uid &&
+                       request.resource.data.createdAt == request.time;
+      
+      allow update: if isAuthenticated() &&
+                       (resource.data.authorId == request.auth.uid || 
+                        isSiteOwner(resource.data.siteId));
+      
+      allow delete: if isAuthenticated() &&
+                       (resource.data.authorId == request.auth.uid || 
+                        isSiteOwner(resource.data.siteId));
+    }
+  }
+}
