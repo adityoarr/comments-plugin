@@ -95,8 +95,7 @@ export default function Home() {
           className="font-medium text-zinc-700 hover:underline dark:text-zinc-300"
         >
           Adityo
-        </a>{" "}
-        · Amarta Vecta Dunya
+        </a>
       </footer>
     </div>
   );
