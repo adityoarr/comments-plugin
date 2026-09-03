@@ -43,12 +43,12 @@ export default function Home() {
             >
               Sign in to your dashboard
             </Link>
-            <a
-              href="https://github.com/adityoarr/comments-plugin#how-to-integrate-this-plugin-into-another-website"
+            <Link
+              href="/docs"
               className="rounded-lg border border-zinc-300 px-5 py-2.5 text-sm font-medium text-zinc-800 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-900"
             >
               Read integration docs
-            </a>
+            </Link>
           </div>
         </section>
 
@@ -63,7 +63,10 @@ export default function Home() {
           </pre>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             That&apos;s it — the widget lazy-loads itself and auto-resizes to
-            fit its content.
+            fit its content.{" "}
+            <Link href="/docs" className="font-medium text-blue-600 hover:underline dark:text-blue-400">
+              See the full installation guide →
+            </Link>
           </p>
         </section>
 
